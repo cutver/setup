@@ -40,6 +40,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prune floating tags locally
+        run: |
+          git tag -l | grep -E '^v[0-9]+$' | xargs -r git tag -d
+
       - name: Run Cutver Release
         id: cutver
         uses: cutver/release@v1
@@ -62,3 +66,11 @@ jobs:
           body_path: ${{ steps.cutver.outputs.notes-path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update floating major tag
+        run: |
+          LATEST_TAG="${{ steps.tag.outputs.tag }}"
+          MAJOR_TAG=$(echo "$LATEST_TAG" | cut -d. -f1)
+
+          git tag -fa "$MAJOR_TAG" -m "chore(tag): update floating $MAJOR_TAG to $LATEST_TAG"
+          git push origin "$MAJOR_TAG" --force

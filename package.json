@@ -1,6 +1,6 @@
 {
   "name": "@cutver/setup",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/main.ts -o dist/ --minify",

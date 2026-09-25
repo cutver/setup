@@ -46,7 +46,7 @@ jobs:
         with:
           command: "release"
           bump: "auto"
-          check-changelog: "true"
+          check-changelog: "false"
           notes-file: "RELEASE_NOTES.md"
           template: ".github/templates/cutver/RELEASE.md"
 

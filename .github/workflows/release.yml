@@ -42,7 +42,7 @@ jobs:
 
       - name: Run Cutver Release
         id: cutver
-        uses: Row0902/cutver-actions/release@v1
+        uses: cutver/release@v1
         with:
           command: "release"
           bump: "auto"

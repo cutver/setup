@@ -1,0 +1,39 @@
+{
+  "name": "@cutver/setup",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/main.ts -o dist/ --minify",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run typecheck && pnpm run build"
+  },
+  "keywords": [
+    "actions",
+    "cutver",
+    "setup",
+    "semver",
+    "release"
+  ],
+  "author": "Row0902",
+  "license": "MIT",
+  "homepage": "https://github.com/cutver/setup#readme",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.6.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.6.0",
+  "type": "module",
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/exec": "^3.0.0",
+    "@actions/tool-cache": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vercel/ncc": "^0.45.0",
+    "typescript": "5.9.3"
+  }
+}

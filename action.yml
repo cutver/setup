@@ -1,0 +1,25 @@
+name: "Setup Cutver"
+description: "Download, cache, and add cutver CLI to the PATH"
+author: "Row0902"
+
+branding:
+  icon: "download"
+  color: "blue"
+
+inputs:
+  version:
+    description: 'Version of cutver to install (without "v", e.g. "0.1.0" or "latest")'
+    required: false
+    default: "latest"
+  github-token:
+    description: 'GitHub Token to authenticate requests when resolving "latest"'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  installed-version:
+    description: "The exact version of cutver that was installed"
+
+runs:
+  using: "node24"
+  main: "dist/index.js"

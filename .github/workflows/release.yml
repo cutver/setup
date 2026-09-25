@@ -1,4 +1,4 @@
-name: Release Cutver Setup
+name: Cutver Setup
 
 on:
   push:

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com).
 
+## [v1.0.3] - 2026-09-26
+
+**✨ What's Changed in v1.0.3**
+
+### 🐛 Bug Fixes
+- **installer**: use cutver organization as upstream and return resolved version (#1)
+
+### 👥 Contributors
+- @Row0902
+
+---
+**Full Diff**: https://github.com/cutver/setup/compare/v1.0.2...v1.0.3
 ## [v1.0.2] - 2026-09-25
 
 **✨ What's Changed in v1.0.2**

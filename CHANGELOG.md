@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com).
 
+## [v1.0.4] - 2026-09-26
+
+**✨ What's Changed in v1.0.4**
+
+### 📚 Documentation
+- **readme**: add comprehensive documentation, inputs, outputs, and examples (#2)
+
+### 👥 Contributors
+- @Row0902
+
+---
+**Full Diff**: https://github.com/cutver/setup/compare/v1.0.3...v1.0.4
 ## [v1.0.3] - 2026-09-26
 
 **✨ What's Changed in v1.0.3**

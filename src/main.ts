@@ -9,12 +9,12 @@ async function run(): Promise<void> {
 
         const strategy = PlatformFactory.create();
 
-        const installer = new CutverInstaller('Row0902', 'cutver', strategy);
+        const installer = new CutverInstaller('cutver', 'cutver', strategy);
 
-        const installedPath = await installer.install(rawVersion, token);
+        const { path: installedPath, version } = await installer.install(rawVersion, token);
 
         core.addPath(installedPath);
-        core.setOutput('installed-version', rawVersion);
+        core.setOutput('installed-version', version);
 
         core.info('cutver configurado con éxito en el runner.');
     } catch (error) {

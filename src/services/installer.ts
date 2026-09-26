@@ -32,7 +32,7 @@ export class CutverInstaller {
         return data.tag_name.replace(/^v/, '');
     }
 
-    async install(requestedVersion: string, token?: string): Promise<string> {
+    async install(requestedVersion: string, token?: string): Promise<{ path: string; version: string }> {
         const version = requestedVersion.toLowerCase() === 'latest'
             ? await this.resolveLatestVersion(token)
             : requestedVersion.replace(/^v/, '');
@@ -43,7 +43,7 @@ export class CutverInstaller {
 
         if (toolDirectory) {
             core.info(`cutver v${version} encontrado en tool-cache local.`);
-            return toolDirectory;
+            return { path: toolDirectory, version };
         }
 
         const assetName = this.strategy.getAssetFileName(version);
@@ -73,6 +73,6 @@ export class CutverInstaller {
         core.info('Almacenando en tool-cache del runner...');
         toolDirectory = await tc.cacheDir(finalBinaryDir, 'cutver', version, this.strategy.target);
 
-        return toolDirectory;
+        return { path: toolDirectory, version };
     }
 }

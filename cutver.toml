@@ -1,5 +1,5 @@
 # cutver.toml - release orchestration configuration
-# For full documentation, see https://github.com/Row0902/cutver
+# For full documentation, see https://github.com/cutver/cutver
 
 [[manifest]]
 path = "package.json"

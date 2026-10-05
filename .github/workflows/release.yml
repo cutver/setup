@@ -1,9 +1,18 @@
 name: Cutver Setup
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "SemVer bump level"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write
@@ -49,7 +58,7 @@ jobs:
         uses: cutver/release@v1
         with:
           command: "release"
-          bump: "auto"
+          bump: ${{ inputs.bump || 'auto' }}
           check-changelog: "false"
           notes-file: "RELEASE_NOTES.md"
           template: ".github/templates/cutver/RELEASE.md"

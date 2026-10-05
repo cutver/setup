@@ -1,6 +1,6 @@
 name: "Setup Cutver"
 description: "Download, cache, and add cutver CLI to the PATH"
-author: "Row0902"
+author: "cutver"
 
 branding:
   icon: "download"
@@ -15,6 +15,10 @@ inputs:
     description: 'GitHub Token to authenticate requests when resolving "latest"'
     required: false
     default: ${{ github.token }}
+  cache:
+    description: 'Whether to use the runner tool-cache. Set to false to bypass local cache and force fresh download'
+    required: false
+    default: "true"
 
 outputs:
   installed-version:

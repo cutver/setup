@@ -2,12 +2,18 @@ import * as fs from 'node:fs/promises';
 import type { IPlatformStrategy } from '../types/platform';
 
 export abstract class BasePlatformStrategy implements IPlatformStrategy {
-    abstract readonly target: string;
+    abstract readonly slug: string;
+    abstract readonly legacyTarget?: string | undefined;
     abstract readonly archiveExt: 'tar.gz' | 'zip';
     abstract readonly binaryFileName: string;
 
-    getAssetFileName(version: string): string {
-        return `cutver-${version}-${this.target}.${this.archiveExt}`;
+    get target(): string {
+        return this.slug;
+    }
+
+    getAssetFileName(version: string, useLegacy = false): string {
+        const identifier = useLegacy && this.legacyTarget ? this.legacyTarget : this.slug;
+        return `cutver-${version}-${identifier}.${this.archiveExt}`;
     }
 
     abstract extract(archivePath: string): Promise<string>;

@@ -11,22 +11,22 @@ export class PlatformFactory {
 
         switch (platform) {
             case 'linux':
-                if (arch !== 'x64') {
-                    throw new Error(`Arquitectura Linux no soportada: ${arch}. Solo x64 está disponible.`);
+                if (arch !== 'x64' && arch !== 'arm64') {
+                    throw new Error(`Arquitectura Linux no soportada: ${arch}. Solo x64 y arm64 están disponibles.`);
                 }
-                return new LinuxStrategy();
+                return new LinuxStrategy(arch);
 
             case 'darwin':
                 if (arch !== 'x64' && arch !== 'arm64') {
-                    throw new Error(`Arquitectura macOS no soportada: ${arch}.`);
+                    throw new Error(`Arquitectura macOS no soportada: ${arch}. Solo x64 y arm64 están disponibles.`);
                 }
                 return new MacStrategy(arch);
 
             case 'win32':
-                if (arch !== 'x64') {
-                    throw new Error(`Arquitectura Windows no soportada: ${arch}. Solo x64 está disponible.`);
+                if (arch !== 'x64' && arch !== 'arm64') {
+                    throw new Error(`Arquitectura Windows no soportada: ${arch}. Solo x64 y arm64 están disponibles.`);
                 }
-                return new WindowsStrategy();
+                return new WindowsStrategy(arch);
 
             default:
                 throw new Error(`Sistema operativo no soportado: ${platform}`);

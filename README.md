@@ -16,12 +16,15 @@
 
 ## Features
 
-- **Multi-Platform Support**: Automatically detects runner OS and architecture:
-  - Linux `x86_64` (`x86_64-unknown-linux-gnu`)
-  - macOS `x86_64` (`x86_64-apple-darwin` / Intel)
-  - macOS `arm64` (`aarch64-apple-darwin` / Apple Silicon)
-  - Windows `x86_64` (`x86_64-pc-windows-msvc`)
-- **Fast & Cached**: Caches downloaded binaries in the runner's tool-cache directory to avoid redundant downloads across workflow steps.
+- **Multi-Platform Support**: Automatically detects runner OS and architecture across the full 64-bit platform matrix:
+  - Linux `x86_64` (`linux-x86_64` / legacy `x86_64-unknown-linux-gnu`)
+  - Linux `arm64` (`linux-arm64`)
+  - macOS `x86_64` (`macos-x86_64` / legacy `x86_64-apple-darwin` / Intel)
+  - macOS `arm64` (`macos-arm64` / legacy `aarch64-apple-darwin` / Apple Silicon)
+  - Windows `x86_64` (`windows-x86_64` / legacy `x86_64-pc-windows-msvc`)
+  - Windows `arm64` (`windows-arm64`)
+- **Dual-Slug Resolution**: Seamlessly downloads modern standard slug assets (`cutver-{version}-{os}-{arch}.{ext}`) with automatic fallback to historical release target tuples.
+- **Fast & Cached**: Caches downloaded binaries in the runner's tool-cache directory to avoid redundant downloads across workflow steps. Supports cache invalidation via `cache: false`.
 - **Floating Tag Support**: Use `cutver/setup@v1` to always run the latest non-breaking setup action.
 - **Zero Heavy Runtime**: Bundled with `@vercel/ncc` into a standalone Node 24 action with zero runner package dependencies.
 
@@ -75,6 +78,7 @@ When resolving `"latest"`, GitHub API rate limits apply to unauthenticated reque
 | :--- | :--- | :---: | :--- |
 | `version` | Target SemVer version of Cutver to install (e.g. `"0.5.1"` or `"latest"`). Leading `'v'` is automatically stripped. | No | `"latest"` |
 | `github-token` | GitHub token used to authenticate GitHub API requests when resolving the latest release. | No | `${{ github.token }}` |
+| `cache` | Whether to use the runner tool-cache. Set to `false` to bypass local cache and force fresh download. | No | `"true"` |
 
 ### Outputs
 

@@ -1,43 +1,45 @@
-**✨ What's Changed in {{ tag }}**
-{% if breaking %}
+## [{{ tag }}] - {{ date }}
+
+{%- if breaking %}
 ### ⚠️ Breaking Changes
-{{ breaking }}
-{% endif -%}
-{% if features %}
+{% for c in commits if c.is_breaking -%}
+- {{ c.line }}
+{%- if c.breaking_description %}
+  > ⚠️ **Migration**: {{ c.breaking_description }}
+{%- endif %}
+{% endfor %}
+{%- endif %}
+
+{%- for type, type_commits in commits | group_by_type %}
+{%- if type == 'feat' %}
 ### 🚀 Features & Enhancements
-{{ features }}
-{% endif -%}
-{% if fixes %}
+{%- elif type == 'fix' %}
 ### 🐛 Bug Fixes
-{{ fixes }}
-{% endif -%}
-{% if perf %}
+{%- elif type == 'perf' %}
 ### ⚡ Performance Improvements
-{{ perf }}
-{% endif -%}
-{% if refactor %}
-### 🛠 Code Refactoring
-{{ refactor }}
-{% endif -%}
-{% if docs %}
+{%- elif type == 'refactor' %}
+### 🔄 Code Refactoring
+{%- elif type == 'docs' %}
 ### 📚 Documentation
-{{ docs }}
-{% endif -%}
-{% if maintenance %}
-### 🧰 Maintenance & Dependencies
-{{ maintenance }}
-{% endif -%}
-{% if other %}
-### 🔍 Other Changes
-{{ other }}
-{% endif -%}
-{% if contributors %}
+{%- elif type in ['chore', 'build', 'ci', 'test', 'style', 'revert'] %}
+### 🛠️ Maintenance & Dependencies
+{%- else %}
+### 📦 {{ type | title }}
+{%- endif %}
+{% for c in type_commits if not c.is_breaking -%}
+- {{ c.line }}
+{% endfor %}
+{%- endfor %}
+
+{%- if contributors %}
 ### 👥 Contributors
 {% for author in contributors -%}
 - @{{ author }}
-{% endfor -%}
-{% endif -%}
-{% if compare_url %}
----
-**Full Diff**: {{ compare_url }}
+{% endfor %}
 {%- endif %}
+
+---
+{%- if compare_url %}
+**Full Changelog**: {{ compare_url }}
+{%- endif %}
+{%- if env("GITHUB_RUN_NUMBER") %} • *CI Build #{{ env("GITHUB_RUN_NUMBER") }}*{%- endif %}

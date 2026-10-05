@@ -1,6 +1,9 @@
 # cutver.toml - release orchestration configuration
 # For full documentation, see https://github.com/cutver/cutver
 
+[project]
+name = "@cutver/setup"
+
 [[manifest]]
 path = "package.json"
 kind = "json"
@@ -14,15 +17,15 @@ default_timeout = 300
 [changelog]
 path = "CHANGELOG.md"
 format = "keep-a-changelog"
-mode = "conventional"
+mode = "template"
 template_file = ".github/templates/cutver/RELEASE.md"
 
 [git]
 tag_prefix = "v"
 require_clean_tree = true
-commit_message = "chore(release): v{version} [skip ci]"
+commit_message = "chore(release): v{{ version }} [skip ci]"
 require_branch = "main"
-
+floating_major_tag = true
 
 [publish]
 push = true

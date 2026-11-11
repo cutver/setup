@@ -5,7 +5,7 @@ export interface IPlatformStrategy {
     readonly binaryFileName: string;
     readonly target: string;
 
-    getAssetFileName(version: string, useLegacy?: boolean): string;
+    getAssetFileName(version: string, useLegacy?: boolean, plugins?: boolean): string;
     extract(archivePath: string): Promise<string>;
     preparePermissions(binaryPath: string): Promise<void>;
 }

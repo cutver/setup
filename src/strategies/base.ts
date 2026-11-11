@@ -11,9 +11,10 @@ export abstract class BasePlatformStrategy implements IPlatformStrategy {
         return this.slug;
     }
 
-    getAssetFileName(version: string, useLegacy = false): string {
+    getAssetFileName(version: string, useLegacy = false, plugins = false): string {
         const identifier = useLegacy && this.legacyTarget ? this.legacyTarget : this.slug;
-        return `cutver-${version}-${identifier}.${this.archiveExt}`;
+        const prefix = plugins ? 'cutver-plugins' : 'cutver';
+        return `${prefix}-${version}-${identifier}.${this.archiveExt}`;
     }
 
     abstract extract(archivePath: string): Promise<string>;

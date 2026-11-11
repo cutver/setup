@@ -19,6 +19,10 @@ inputs:
     description: 'Whether to use the runner tool-cache. Set to false to bypass local cache and force fresh download'
     required: false
     default: "true"
+  plugins:
+    description: 'Whether to install the plugin-enabled Cutver binary variant (cutver-plugins-*)'
+    required: false
+    default: "false"
 
 outputs:
   installed-version:

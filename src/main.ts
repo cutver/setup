@@ -7,12 +7,13 @@ async function run(): Promise<void> {
         const rawVersion = core.getInput('version') || 'latest';
         const token = core.getInput('github-token');
         const useCache = core.getBooleanInput('cache');
+        const plugins = core.getBooleanInput('plugins');
 
         const strategy = PlatformFactory.create();
 
         const installer = new CutverInstaller('cutver', 'cutver', strategy);
 
-        const { path: installedPath, version } = await installer.install(rawVersion, token, useCache);
+        const { path: installedPath, version } = await installer.install(rawVersion, token, useCache, plugins);
 
         core.addPath(installedPath);
         core.setOutput('installed-version', version);

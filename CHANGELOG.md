@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com).
 
+## [v1.2.0] - 2026-11-11
+### 🚀 Features & Enhancements
+- add plugins input to install plugin-enabled cutver variant in [#8](https://github.com/cutver/setup/pull/8) ([5b78050](https://github.com/cutver/setup/commit/5b78050910b72cd1b15241783c6398c5864ac964)) by @Row0902
+
+### 🛠️ Maintenance & Dependencies
+- authenticate release workflow using cutver-release[bot] in [#7](https://github.com/cutver/setup/pull/7) ([a963825](https://github.com/cutver/setup/commit/a9638254bfaf80d868ad2df7e298563f071c3931)) by @Row0902
+- convert release workflow to on-demand workflow_dispatch and add CI check in [#5](https://github.com/cutver/setup/pull/5) ([ce2167e](https://github.com/cutver/setup/commit/ce2167eb2ad242f586b6d841e9915d8845b09319)) by @Row0902
+
+### 🛠️ Maintenance & Dependencies
+- adopt modern release template, native floating major tags, and action outputs in [#6](https://github.com/cutver/setup/pull/6) ([3f67a22](https://github.com/cutver/setup/commit/3f67a22a7dfac093914bb98d4be678a2a69032cd)) by @Row0902
+
+### 👥 Contributors
+- @Row0902
+
+
+---
+**Full Changelog**: https://github.com/cutver/setup/compare/v1.1.0...v1.2.0 • *CI Build #10*
 ## [v1.1.0] - 2026-10-05
 
 **✨ What's Changed in v1.1.0**

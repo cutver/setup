@@ -68,6 +68,17 @@ When resolving `"latest"`, GitHub API rate limits apply to unauthenticated reque
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+### Enabling Plugin Support (`cutver-plugins-*`)
+
+To install the WebAssembly and plugin-capable binary variant of Cutver:
+
+```yaml
+- name: Setup Cutver CLI with plugins
+  uses: cutver/setup@v1
+  with:
+    plugins: "true"
+```
+
 ---
 
 ## Action Specification
@@ -79,6 +90,7 @@ When resolving `"latest"`, GitHub API rate limits apply to unauthenticated reque
 | `version` | Target SemVer version of Cutver to install (e.g. `"0.5.1"` or `"latest"`). Leading `'v'` is automatically stripped. | No | `"latest"` |
 | `github-token` | GitHub token used to authenticate GitHub API requests when resolving the latest release. | No | `${{ github.token }}` |
 | `cache` | Whether to use the runner tool-cache. Set to `false` to bypass local cache and force fresh download. | No | `"true"` |
+| `plugins` | Whether to install the plugin-enabled Cutver binary variant (`cutver-plugins-*`). Set to `"true"` when using WebAssembly plugins. | No | `"false"` |
 
 ### Outputs
 

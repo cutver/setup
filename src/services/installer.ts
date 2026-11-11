@@ -37,29 +37,32 @@ export class CutverInstaller {
         return data.tag_name.trim().replace(/^v/i, '');
     }
 
-    async install(requestedVersion: string, token?: string, useCache = true): Promise<{ path: string; version: string }> {
+    async install(requestedVersion: string, token?: string, useCache = true, plugins = false): Promise<{ path: string; version: string }> {
         const rawNormalized = requestedVersion.trim().replace(/^v/i, '');
         const version = !rawNormalized || rawNormalized.toLowerCase() === 'latest'
             ? await this.resolveLatestVersion(token, !useCache)
             : rawNormalized;
 
-        core.info(`Versión resuelta de cutver: v${version}`);
+        const toolName = plugins ? 'cutver-plugins' : 'cutver';
+        const prefix = plugins ? 'cutver-plugins' : 'cutver';
+
+        core.info(`Versión resuelta de ${toolName}: v${version}`);
 
         if (useCache) {
-            let toolDirectory = tc.find('cutver', version, this.strategy.slug);
+            let toolDirectory = tc.find(toolName, version, this.strategy.slug);
             if (!toolDirectory && this.strategy.legacyTarget) {
-                toolDirectory = tc.find('cutver', version, this.strategy.legacyTarget);
+                toolDirectory = tc.find(toolName, version, this.strategy.legacyTarget);
             }
 
             if (toolDirectory) {
-                core.info(`cutver v${version} encontrado en tool-cache local.`);
+                core.info(`${toolName} v${version} encontrado en tool-cache local.`);
                 return { path: toolDirectory, version };
             }
         } else {
             core.info('Bypassing local tool-cache due to cache=false.');
         }
 
-        const primaryAssetName = this.strategy.getAssetFileName(version, false);
+        const primaryAssetName = this.strategy.getAssetFileName(version, false, plugins);
         const primaryUrl = `https://github.com/${this.repoOwner}/${this.repoName}/releases/download/v${version}/${primaryAssetName}`;
 
         let archivePath: string;
@@ -68,7 +71,7 @@ export class CutverInstaller {
             archivePath = await tc.downloadTool(primaryUrl);
         } catch (error) {
             if (this.strategy.legacyTarget) {
-                const legacyAssetName = this.strategy.getAssetFileName(version, true);
+                const legacyAssetName = this.strategy.getAssetFileName(version, true, plugins);
                 const legacyUrl = `https://github.com/${this.repoOwner}/${this.repoName}/releases/download/v${version}/${legacyAssetName}`;
                 core.warning(`Fallo descarga de asset primario (${primaryAssetName}). Intentando fallback legacy: ${legacyUrl}`);
                 archivePath = await tc.downloadTool(legacyUrl);
@@ -82,8 +85,9 @@ export class CutverInstaller {
 
         const candidates = [
             extractedRoot,
-            path.join(extractedRoot, `cutver-${version}-${this.strategy.slug}`),
-            ...(this.strategy.legacyTarget ? [path.join(extractedRoot, `cutver-${version}-${this.strategy.legacyTarget}`)] : [])
+            path.join(extractedRoot, `${prefix}-${version}-${this.strategy.slug}`),
+            ...(this.strategy.legacyTarget ? [path.join(extractedRoot, `${prefix}-${version}-${this.strategy.legacyTarget}`)] : []),
+            path.join(extractedRoot, `cutver-${version}-${this.strategy.slug}`)
         ];
 
         let finalBinaryDir = extractedRoot;
@@ -105,7 +109,7 @@ export class CutverInstaller {
         let toolDirectory = finalBinaryDir;
         if (useCache) {
             core.info('Almacenando en tool-cache del runner...');
-            toolDirectory = await tc.cacheDir(finalBinaryDir, 'cutver', version, this.strategy.slug);
+            toolDirectory = await tc.cacheDir(finalBinaryDir, toolName, version, this.strategy.slug);
         }
 
         return { path: toolDirectory, version };

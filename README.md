@@ -25,6 +25,7 @@
   - Windows `arm64` (`windows-arm64`)
 - **Dual-Slug Resolution**: Seamlessly downloads modern standard slug assets (`cutver-{version}-{os}-{arch}.{ext}`) with automatic fallback to historical release target tuples.
 - **Fast & Cached**: Caches downloaded binaries in the runner's tool-cache directory to avoid redundant downloads across workflow steps. Supports cache invalidation via `cache: false`.
+- **Verified Downloads**: Checks each freshly downloaded archive against the release `SHA256SUMS` before extracting it and fails closed when the checksum is missing or does not match. Verification is on by default; a caller that sets `verify-checksum: "false"` gets the archive extracted unverified.
 - **Floating Tag Support**: Use `cutver/setup@v1` to always run the latest non-breaking setup action.
 - **Zero Heavy Runtime**: Bundled with `@vercel/ncc` into a standalone Node 24 action with zero runner package dependencies.
 
@@ -79,6 +80,32 @@ To install the WebAssembly and plugin-capable binary variant of Cutver:
     plugins: "true"
 ```
 
+### Integrity Verification
+
+Every download is verified before it is extracted, unless the caller sets `verify-checksum: "false"`. After
+fetching the archive, the action downloads the release's `SHA256SUMS` from the same `releases/download/v<version>/`
+directory, computes the archive's SHA-256 and compares both digests. A mismatch fails the step with the
+expected and the actual digest, and nothing is extracted. Verification is on by default, so existing
+workflows gain it without any edit.
+
+Because the step fails closed, a release published before `SHA256SUMS` existed — or one whose
+`SHA256SUMS` has no entry for the downloaded asset — fails instead of silently installing an unverified
+binary. Only that case needs the explicit opt-out:
+
+```yaml
+- name: Setup Cutver CLI from a release without SHA256SUMS
+  uses: cutver/setup@v1
+  with:
+    version: "0.0.1"
+    verify-checksum: "false"
+```
+
+Disabling verification means the archive is installed without any integrity check.
+
+A tool-cache hit is trusted: when the runner already holds the requested version, nothing is downloaded and
+nothing is verified. A tree cached by a run with `verify-checksum: "false"` is therefore reused by a later
+run that has verification enabled. Use `cache: "false"` when you need a fresh, verified download.
+
 ---
 
 ## Action Specification
@@ -91,6 +118,7 @@ To install the WebAssembly and plugin-capable binary variant of Cutver:
 | `github-token` | GitHub token used to authenticate GitHub API requests when resolving the latest release. | No | `${{ github.token }}` |
 | `cache` | Whether to use the runner tool-cache. Set to `false` to bypass local cache and force fresh download. | No | `"true"` |
 | `plugins` | Whether to install the plugin-enabled Cutver binary variant (`cutver-plugins-*`). Set to `"true"` when using WebAssembly plugins. | No | `"false"` |
+| `verify-checksum` | Verify the downloaded archive against the release `SHA256SUMS` before extracting it. The step fails if the digest does not match, or if the release publishes no `SHA256SUMS` or no entry for the downloaded asset. Set to `"false"` only for releases published before `SHA256SUMS` existed. | No | `"true"` |
 
 ### Outputs
 

@@ -5,7 +5,12 @@
   "scripts": {
     "build": "ncc build src/main.ts -o dist/ --minify",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm run typecheck && pnpm run build"
+    "test": "node --test src/services/checksum.test.ts",
+    "check": "pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "imports": {
+    "#services/checksum": "./src/services/checksum.ts",
+    "#services/installer": "./src/services/installer.ts"
   },
   "keywords": [
     "actions",

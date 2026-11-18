@@ -23,6 +23,10 @@ inputs:
     description: 'Whether to install the plugin-enabled Cutver binary variant (cutver-plugins-*)'
     required: false
     default: "false"
+  verify-checksum:
+    description: 'Download the release SHA256SUMS and verify the archive digest before extracting it. Set to false only for releases published before SHA256SUMS existed; with verification disabled the archive is never verified'
+    required: false
+    default: "true"
 
 outputs:
   installed-version:

@@ -27,5 +27,35 @@ commit_message = "chore(release): v{{ version }} [skip ci]"
 require_branch = "main"
 floating_major_tag = true
 
+# `publish` verifies this after validation and before the tag: the bundle the action
+# actually runs has to exist in the release commit it is about to tag.
+[[artifact]]
+glob = "dist/index.js"
+at_least = 1
+description = "bundled action entrypoint"
+
 [publish]
 push = true
+
+# The release record is owned here rather than by a separate action: `cutver publish`
+# dispatches `on_post_release`, which creates the release as a draft so a failed upload
+# cannot leave it public and asset-less. A lean build cannot load this, which is why the
+# release workflow installs the CLI with `plugins: "true"` and runs `plugin restore`.
+[plugins.github-publish]
+runtime = "wasm"
+source = "github-publish-0.2.1.wasm"
+hash = "0a38c934200f833a35cae3a53c03c403566f42f4abc58a744a7b2d8a09874a9b"
+capabilities = ["lifecycle.v1"]
+events = ["on_pre_bump", "on_post_release"]
+
+[plugins.github-publish.permissions]
+network = ["api.github.com", "uploads.github.com"]
+env = ["GITHUB_TOKEN", "GITHUB_REPOSITORY"]
+filesystem = ["."]
+
+[plugins.github-publish.config]
+repository = "cutver/setup"
+# Required, and its default is false. Without it the plugin publishes a public, asset-less
+# release before this action's `dist/` is attached.
+draft = true
+title_template = "Setup Cutver {version}"

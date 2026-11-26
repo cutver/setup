@@ -19,3 +19,37 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
+
+  doctor:
+    name: Cutver Doctor
+    # Push only. This job runs cutver against a checkout whose `cutver.toml` can declare a
+    # wasm plugin with an environment grant for `GITHUB_TOKEN` and arbitrary network grants.
+    # On a `pull_request` that file comes from the PR (forks included), so running it with
+    # the token in scope would hand the token to whoever wrote the PR. The release job runs
+    # only from main and gates on the same check before it tags anything.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Pinned by commit SHA rather than the floating `@v1` tag: a tag can be moved under
+      # us, while the commit is the only stable identity, so this records exactly which
+      # installer the changelog gate ran.
+      - uses: cutver/setup@f5750f14d73e8b98fd94227ea1ef631493504616
+        with:
+          # The plugin-enabled build. `github-publish` is a WebAssembly plugin and cutver
+          # fails closed on a lean binary, which would make this gate red on every run.
+          plugins: "true"
+      # The driver reads the declared wasm artifact from the cache when it is constructed,
+      # so `doctor` needs it restored first: an empty cache fails closed too.
+      - name: Restore declared plugins
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cutver plugin restore
+      # `github-publish` declares GITHUB_TOKEN in its environment grant and cutver fails
+      # closed when a granted variable is missing, so the gate needs the token in scope.
+      - name: Verify manifest and changelog sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cutver doctor --check-changelog

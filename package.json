@@ -5,7 +5,7 @@
   "scripts": {
     "build": "ncc build src/main.ts -o dist/ --minify",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/services/checksum.test.ts",
+    "test": "node --test src/services/checksum.test.ts src/workflows/release-contract.test.ts",
     "check": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "imports": {

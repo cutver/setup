@@ -13,36 +13,56 @@ on:
           - patch
           - minor
           - major
+      resume-tag:
+        description: "Tag of a release whose publish failed. Give it together with resume-commit to finish that release instead of cutting a new version"
+        required: false
+      resume-commit:
+        description: "That release's commit, as the failed run printed it"
+        required: false
 
 permissions:
   contents: write
+
+# One release at a time, and never cancel the one in progress: a cancelled run would
+# leave the pushed release commit behind without its tag or its release record.
+concurrency:
+  group: cutver-release
+  cancel-in-progress: false
 
 jobs:
   release:
     name: Self-Version and Release
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Cutver bot token
+      - name: Mint the Cutver bot token
         id: bot-token
-        if: env.CUTVER_APP_ID != '' && env.CUTVER_APP_PRIVATE_KEY != ''
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.CUTVER_APP_ID }}
           private-key: ${{ secrets.CUTVER_APP_PRIVATE_KEY }}
+
+      # Fail closed: the release commit is pushed with the bot token, so without it the
+      # push would authenticate as github-actions[bot] and be rejected only after the
+      # release commit already exists.
+      - name: Require the Cutver bot token
         env:
-          CUTVER_APP_ID: ${{ secrets.CUTVER_APP_ID }}
-          CUTVER_APP_PRIVATE_KEY: ${{ secrets.CUTVER_APP_PRIVATE_KEY }}
+          CUTVER_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          if [ -z "$CUTVER_TOKEN" ]; then
+            echo "::error::No Cutver bot token was minted. The release push authenticates as cutver-release[bot]; degrading to github-actions[bot] would fail the push after the release commit already exists."
+            exit 1
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ steps.bot-token.outputs.token || github.token }}
+          token: ${{ steps.bot-token.outputs.token }}
 
-      - name: Setup Git bot credentials
+      - name: Configure the release commit identity
         run: |
           git config --global user.name "cutver-release[bot]"
-          git config --global user.email "${{ secrets.CUTVER_APP_ID || 'github-actions' }}+cutver-release[bot]@users.noreply.github.com"
+          git config --global user.email "${{ secrets.CUTVER_APP_ID }}+cutver-release[bot]@users.noreply.github.com"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -56,28 +76,105 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Dogfood Setup Cutver CLI
+      # `github-publish` is a WebAssembly plugin and a lean cutver build fails closed, so
+      # the dogfooded CLI has to be the plugin-enabled variant.
+      - name: Install the Cutver CLI from this action
         uses: ./
         with:
-          github-token: ${{ steps.bot-token.outputs.token || secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
           cache: "false"
+          plugins: "true"
 
-      - name: Run Cutver Release
-        id: cutver
-        uses: cutver/release@v1
-        with:
-          command: "release"
-          bump: ${{ inputs.bump || 'auto' }}
-          check-changelog: "false"
-          notes-file: "RELEASE_NOTES.md"
-          template: ".github/templates/cutver/RELEASE.md"
-
-      - name: Create GitHub Release
-        if: steps.cutver.outputs.released == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.cutver.outputs.tag }}
-          name: Release ${{ steps.cutver.outputs.tag }}
-          body_path: ${{ steps.cutver.outputs.notes-path }}
+      # `github-publish` declares GITHUB_TOKEN in its environment grant and cutver fails
+      # closed when a granted variable is missing, so every command that resolves plugins
+      # needs the token in its own environment.
+      - name: Restore declared plugins
         env:
-          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: cutver plugin restore
+
+      - name: Validate configuration and changelog
+        env:
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: cutver doctor --check-changelog
+
+      # `--defer-publish` stops after the release commit is pushed: the tag, the publish
+      # commands and the `on_post_release` plugins wait for `cutver publish`, so a failure
+      # while rendering the notes cannot leave a tag pointing at a release with no record.
+      #
+      # No `--channel` and no channel input: the prerelease ladder ships in cutver 0.22.0,
+      # and the stable release this action installs is still 0.21.0, which rejects the flag
+      # outright. Offering alpha/beta/rc would fail on every use, so the ladder comes back
+      # only once the installed CLI carries it.
+      #
+      # `--defer-publish` pushes the release commit and stops, so a failure after it leaves
+      # that commit untagged. Re-running would bump again, and the branch push would reject
+      # it. The recovery route is resuming that exact release by tag and commit, with no
+      # bump at all: that is what the two resume inputs are for.
+      - name: Cut the release commit, or resume a pending one
+        id: cutver
+        env:
+          BUMP: ${{ inputs.bump }}
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
+          RESUME_TAG: ${{ inputs.resume-tag }}
+          RESUME_COMMIT: ${{ inputs.resume-commit }}
+        run: |
+          if [ -n "$RESUME_TAG" ] || [ -n "$RESUME_COMMIT" ]; then
+            if [ -z "$RESUME_TAG" ] || [ -z "$RESUME_COMMIT" ]; then
+              echo "::error::resume-tag and resume-commit go together: one without the other cannot identify the release."
+              exit 1
+            fi
+            git cat-file -e "${RESUME_COMMIT}^{commit}"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "deferred=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$RESUME_TAG" >> "$GITHUB_OUTPUT"
+            echo "commit=$RESUME_COMMIT" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          cutver bump "$BUMP" --defer-publish
+
+      # A missing output is not the same as `released=false`: the first would silently skip
+      # every publishing step below and leave the release deferred with no record. The
+      # step output file is per-step, so the guard reads the output, not `$GITHUB_OUTPUT`.
+      - name: Require the bump outputs
+        if: steps.cutver.outputs.released == ''
+        run: |
+          echo "::error::cutver bump wrote no released output; the release was not recorded and nothing was published."
+          exit 1
+
+      # The notes are written to $RUNNER_TEMP because `require_clean_tree` is on: a file
+      # inside the workspace would dirty the tree and `cutver publish` would refuse.
+      - name: Render release notes
+        if: steps.cutver.outputs.released == 'true'
+        run: |
+          cutver changelog latest --template .github/templates/cutver/RELEASE.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          if ! grep -q '[^[:space:]]' "$RUNNER_TEMP/RELEASE_NOTES.md"; then
+            echo "::error::The rendered release notes are empty; cutver publish refuses an empty notes stream."
+            exit 1
+          fi
+
+      # `--defer-publish` pushed the release commit already, so a failure from here leaves
+      # that commit untagged. Rerun this workflow with `resume-tag` and `resume-commit` from
+      # the failed run to come back here without bumping; `cutver publish` then refuses any
+      # tag that already exists, so this step is safe to repeat.
+      - name: Publish the release
+        if: steps.cutver.outputs.released == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          cat "$RUNNER_TEMP/RELEASE_NOTES.md" | cutver publish --tag "${{ steps.cutver.outputs.tag }}" --commit "${{ steps.cutver.outputs.commit }}" --notes-file -
+
+      # `[plugins.github-publish.config] draft = true` is what stops an asset-less public
+      # release, so the draft is promoted only after `publish` succeeded.
+      - name: Promote the release
+        if: steps.cutver.outputs.released == 'true'
+        env:
+          TAG: ${{ steps.cutver.outputs.tag }}
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+        run: |
+          if ! gh release view "$TAG" --json isDraft >/dev/null; then
+            echo "::error::The github-publish plugin created no draft for $TAG. Check that `cutver publish` ran on the plugin-enabled build and that its on_post_release plugin succeeded."
+            exit 1
+          fi
+          gh release edit "$TAG" --draft=false --prerelease=false --latest=true

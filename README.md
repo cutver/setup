@@ -130,24 +130,26 @@ run that has verification enabled. Use `cache: "false"` when you need a fresh, v
 
 ## Complete Release Workflow Example
 
-Pair `cutver/setup` with [`cutver/release`](https://github.com/cutver/release) to automate versioning and release notes:
+The Cutver CLI owns the whole release: it bumps the manifests, renders the notes through your template, creates the release record and publishes it. Install the CLI with `cutver/setup` and call it directly:
 
 ```yaml
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
-  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -159,12 +161,53 @@ jobs:
       - name: Setup Cutver CLI
         id: setup-cutver
         uses: cutver/setup@v1
-
-      - name: Run Cutver Release
-        uses: cutver/release@v1
         with:
-          command: release
-          bump: auto
+          # The release record is created by the `github-publish` plugin, which ships in
+          # the plugin-enabled build only; a lean binary fails closed on it.
+          plugins: "true"
+
+      # The plugin driver reads its wasm artifact from the cache when it is constructed.
+      - name: Restore declared plugins
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cutver plugin restore
+
+      - name: Validate configuration and changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cutver doctor --check-changelog
+
+      # Stops after the release commit is pushed: the tag and the release wait for `publish`.
+      # `GITHUB_TOKEN` is in scope because this config declares a plugin that reads it.
+      - name: Bump and defer the publish
+        id: cutver
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cutver bump auto --defer-publish
+
+      # Written outside the workspace because `[git] require_clean_tree` rejects a dirty tree.
+      - name: Render release notes
+        if: steps.cutver.outputs.released == 'true'
+        run: |
+          cutver changelog latest --template .github/templates/cutver/RELEASE.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+
+      - name: Publish the release
+        if: steps.cutver.outputs.released == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          cat "$RUNNER_TEMP/RELEASE_NOTES.md" | cutver publish --tag "${{ steps.cutver.outputs.tag }}" --commit "${{ steps.cutver.outputs.commit }}" --notes-file -
+
+      # `[plugins.github-publish.config] draft = true` is what keeps an asset-less release
+      # from going public, so promote only after `publish` succeeded. A config without that
+      # plugin creates no release record and needs no promotion at all.
+      - name: Promote the release
+        if: steps.cutver.outputs.released == 'true'
+        env:
+          TAG: ${{ steps.cutver.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$TAG" --draft=false --prerelease=false --latest=true
 
       - name: Log Installed Version
         run: echo "Installed Cutver v${{ steps.setup-cutver.outputs.installed-version }}"
@@ -175,7 +218,6 @@ jobs:
 ## Documentation & Ecosystem
 
 - **Core Engine**: [cutver/cutver](https://github.com/cutver/cutver) — Format-preserving release orchestration engine in Rust.
-- **Release Action**: [cutver/release](https://github.com/cutver/release) — GitHub Action to run Cutver release pipelines.
 - **Community & Profile**: [cutver/.github](https://github.com/cutver/.github) — Organization profile and architectural guarantees.
 
 ---

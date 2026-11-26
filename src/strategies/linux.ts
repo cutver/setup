@@ -1,5 +1,6 @@
 import * as tc from '@actions/tool-cache';
-import { BasePlatformStrategy } from './base';
+import { linuxSlug, type Libc } from '#services/libc';
+import { BasePlatformStrategy } from '#strategies/base';
 
 export class LinuxStrategy extends BasePlatformStrategy {
     readonly slug: string;
@@ -7,10 +8,13 @@ export class LinuxStrategy extends BasePlatformStrategy {
     readonly archiveExt = 'tar.gz' as const;
     readonly binaryFileName = 'cutver';
 
-    constructor(arch: string) {
+    constructor(arch: string, libc: Libc = 'gnu') {
         super();
-        this.slug = arch === 'arm64' ? 'linux-arm64' : 'linux-x86_64';
-        this.legacyTarget = arch === 'x64' ? 'x86_64-unknown-linux-gnu' : undefined;
+        this.slug = linuxSlug(arch, libc);
+        // El fallback legacy solo tiene sentido en glibc x86_64: cutver nunca
+        // publicó un asset con triple musl, así que ofrecerlo solo agrega un 404
+        // que enmascara el error real.
+        this.legacyTarget = libc === 'gnu' && arch === 'x64' ? 'x86_64-unknown-linux-gnu' : undefined;
     }
 
     async extract(archivePath: string): Promise<string> {

@@ -19,6 +19,7 @@
 - **Multi-Platform Support**: Automatically detects runner OS and architecture across the full 64-bit platform matrix:
   - Linux `x86_64` (`linux-x86_64` / legacy `x86_64-unknown-linux-gnu`)
   - Linux `arm64` (`linux-arm64`)
+  - Linux musl `x86_64` (`linux-musl-x86_64`) and `arm64` (`linux-musl-arm64`), for Alpine and other musl runners
   - macOS `x86_64` (`macos-x86_64` / legacy `x86_64-apple-darwin` / Intel)
   - macOS `arm64` (`macos-arm64` / legacy `aarch64-apple-darwin` / Apple Silicon)
   - Windows `x86_64` (`windows-x86_64` / legacy `x86_64-pc-windows-msvc`)
@@ -80,6 +81,31 @@ To install the WebAssembly and plugin-capable binary variant of Cutver:
     plugins: "true"
 ```
 
+### Alpine and musl runners
+
+Cutver ships both a glibc and a musl build for Linux. On a musl runner the glibc binary cannot start, so the
+action selects the `linux-musl-*` archive when the running process is itself linked against musl. The check
+looks at the runner's own process, so a glibc host that merely has a musl toolchain installed for
+cross-compilation is not mistaken for a musl runner. Detection is the default, so a musl job needs no edit:
+
+```yaml
+- name: Setup Cutver CLI on Alpine
+  uses: cutver/setup@v1
+```
+
+Set `libc` to force the family when detection cannot help, for example a container that presents a different
+loader than the one in use:
+
+```yaml
+- name: Setup Cutver CLI, forcing the musl build
+  uses: cutver/setup@v1
+  with:
+    libc: "musl"
+```
+
+The input is ignored outside Linux runners, an unknown value fails the step, and the musl archives have no
+legacy target name, so no fallback to a historical triple is attempted for them.
+
 ### Integrity Verification
 
 Every download is verified before it is extracted, unless the caller sets `verify-checksum: "false"`. After
@@ -118,6 +144,7 @@ run that has verification enabled. Use `cache: "false"` when you need a fresh, v
 | `github-token` | GitHub token used to authenticate GitHub API requests when resolving the latest release. | No | `${{ github.token }}` |
 | `cache` | Whether to use the runner tool-cache. Set to `false` to bypass local cache and force fresh download. | No | `"true"` |
 | `plugins` | Whether to install the plugin-enabled Cutver binary variant (`cutver-plugins-*`). Set to `"true"` when using WebAssembly plugins. | No | `"false"` |
+| `libc` | Linux libc family used to pick the archive: `"auto"` reads it from the running process, `"gnu"` or `"musl"` force it. Ignored outside Linux runners. | No | `"auto"` |
 | `verify-checksum` | Verify the downloaded archive against the release `SHA256SUMS` before extracting it. The step fails if the digest does not match, or if the release publishes no `SHA256SUMS` or no entry for the downloaded asset. Set to `"false"` only for releases published before `SHA256SUMS` existed. | No | `"true"` |
 
 ### Outputs

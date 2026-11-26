@@ -8,9 +8,10 @@ async function run(): Promise<void> {
         const token = core.getInput('github-token');
         const useCache = core.getBooleanInput('cache');
         const plugins = core.getBooleanInput('plugins');
+        const libc = core.getInput('libc') || 'auto';
         const verifyChecksum = core.getBooleanInput('verify-checksum');
 
-        const strategy = PlatformFactory.create();
+        const strategy = await PlatformFactory.create(libc);
 
         const installer = new CutverInstaller('cutver', 'cutver', strategy);
 

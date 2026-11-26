@@ -1,5 +1,5 @@
 import * as tc from '@actions/tool-cache';
-import { BasePlatformStrategy } from './base';
+import { BasePlatformStrategy } from '#strategies/base';
 
 export class WindowsStrategy extends BasePlatformStrategy {
     readonly slug: string;

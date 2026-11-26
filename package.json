@@ -5,12 +5,18 @@
   "scripts": {
     "build": "ncc build src/main.ts -o dist/ --minify",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/services/checksum.test.ts",
+    "test": "node --test src/services/checksum.test.ts src/services/libc.test.ts",
     "check": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "imports": {
+    "#factory/platform-factory": "./src/factory/platform-factory.ts",
     "#services/checksum": "./src/services/checksum.ts",
-    "#services/installer": "./src/services/installer.ts"
+    "#services/installer": "./src/services/installer.ts",
+    "#services/libc": "./src/services/libc.ts",
+    "#strategies/base": "./src/strategies/base.ts",
+    "#strategies/linux": "./src/strategies/linux.ts",
+    "#strategies/macos": "./src/strategies/macos.ts",
+    "#strategies/windows": "./src/strategies/windows.ts"
   },
   "keywords": [
     "actions",

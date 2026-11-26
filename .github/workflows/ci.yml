@@ -25,12 +25,13 @@ jobs:
 
   doctor:
     name: Cutver Doctor
-    # Push only. This job runs cutver against a checkout whose `cutver.toml` can declare a
-    # wasm plugin with an environment grant for `GITHUB_TOKEN` and arbitrary network grants.
-    # On a `pull_request` that file comes from the PR (forks included), so running it with
-    # the token in scope would hand the token to whoever wrote the PR. The release job runs
-    # only from main and gates on the same check before it tags anything.
-    if: github.event_name == 'push'
+    # Never on a pull_request. This job runs cutver against a checkout whose `cutver.toml` can
+    # declare a wasm plugin with an environment grant for `GITHUB_TOKEN` and arbitrary network
+    # grants; on a `pull_request` that file comes from the PR (forks included), so running it
+    # with the token in scope would hand the token to whoever wrote the PR. Push and manual
+    # dispatch both start from a trusted ref, and the latter exists because a dropped push
+    # event otherwise leaves this gate unexercised until the next merge touches main.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

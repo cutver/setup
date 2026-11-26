@@ -140,7 +140,8 @@ describe('el gate de CI puede correr', () => {
 
         // `cutver.toml` viaja en el PR y puede declarar un plugin con grant de GITHUB_TOKEN y
         // red arbitraria: correrlo con el token del repo entregaría el token al autor del PR.
-        assert.match(job, /if: github\.event_name == 'push'/);
+        // Push y dispatch manual arrancan desde una ref confiable; un PR, nunca.
+        assert.match(job, /if: github\.event_name != 'pull_request'/);
     });
 });
 

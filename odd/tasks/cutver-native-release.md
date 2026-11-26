@@ -82,3 +82,10 @@ provider's `correction_lines` slot rejected every submission with
 `collectBinding is missing or stale for current STATUS` — five times across two lineages, in both
 documented binding forms, once without the candidate having been edited at all, each time with
 `mutation_performed: false`.
+
+L6. First real release dispatch (`45851385211`, `bump: auto`) failed before writing anything:
+`the minor release over 'v1.2.0..HEAD' declares no compatibility decision`. cutver demands an explicit
+compatibility decision for a minor or major release, and the range carries `feat:` commits from this
+work, so the cut is a minor. The declaration has to live in a commit inside that range, which is what
+the commit carrying this line does: `NO-BREAKING-CHANGE`, because every input keeps its default and its
+meaning and the release-pipeline rewrite is internal to this repository.

@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com).
 
+## [v1.3.0] - 2026-11-26
+### 🚀 Features & Enhancements
+- install musl builds when the runner is musl-linked in [#9](https://github.com/cutver/setup/pull/9) ([66ba3e0](https://github.com/cutver/setup/commit/66ba3e0ef5b1ea5476e7ba0255f1fee93000ccfd)) by @Row0902
+- verify the downloaded archive against SHA256SUMS ([f5750f1](https://github.com/cutver/setup/commit/f5750f14d73e8b98fd94227ea1ef631493504616)) by @Row0902
+
+### 📚 Documentation
+- declare 1.3.0 compatible with 1.x consumers in [#12](https://github.com/cutver/setup/pull/12) ([82b803b](https://github.com/cutver/setup/commit/82b803b069064d3c4de33ea40e880e5d69c658ab)) by @Row0902
+
+### 🛠️ Maintenance & Dependencies
+- let the doctor gate be dispatched by hand in [#11](https://github.com/cutver/setup/pull/11) ([be8d422](https://github.com/cutver/setup/commit/be8d422dd2a6f8eab06672ca295c249317336c5a)) by @Row0902
+- cut a release with cutver itself, not with cutver/release in [#10](https://github.com/cutver/setup/pull/10) ([0f2473b](https://github.com/cutver/setup/commit/0f2473b6fbe53c6c08df1dbeda3066898e1c2916)) by @Row0902
+
+### 👥 Contributors
+- @Row0902
+
+
+---
+**Full Changelog**: https://github.com/cutver/setup/compare/v1.2.0...v1.3.0 • *CI Build #12*
 ## [v1.2.0] - 2026-11-11
 ### 🚀 Features & Enhancements
 - add plugins input to install plugin-enabled cutver variant in [#8](https://github.com/cutver/setup/pull/8) ([5b78050](https://github.com/cutver/setup/commit/5b78050910b72cd1b15241783c6398c5864ac964)) by @Row0902
